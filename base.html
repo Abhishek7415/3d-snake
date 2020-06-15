@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My first three js app</title>
+    <style>
+        body {margin : 0;}
+        canvas { display: block;}
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.js"></script>
+    <script>
+        let scene, camera, renderer, cube, sphere;
+
+    let box = 2;
+
+    let food = {
+        x: Math.floor(Math.random()*10)*box,
+        y: Math.floor(Math.random()*10)*box,
+        z: Math.floor(Math.random()*10)*box
+    }
+
+    let snake = [];
+    snake[0] = {
+        x : 5,
+        y : 0,
+        z : 10
+    }
+
+    function init(){
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f0f0);
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.z = 35;
+        camera.position.x = 10;
+        camera.position.y = 10;
+        renderer = new THREE.WebGLRenderer({alias : true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // var raycaster = new THREE.Raycaster();
+        // var mouse = new THREE.Vector2();
+
+        // //our food
+        
+
+        //our snake
+        for  (var i=0; i<snake.length; i++){
+            if (i==0){
+                var geometry = new THREE.BoxGeometry(1,1,1);
+                var material = new THREE.MeshToonMaterial({color : 'blue'});
+                cube = new THREE.Mesh(geometry,material);
+                cube.position.x = snake[i].x;
+                cube.position.y = snake[i].y;
+                cube.position.z = snake[i].z;
+                scene.add(cube);
+            }else{
+                var geometry = new THREE.BoxGeometry(1,1,1);
+                var material = new THREE.MeshToonMaterial({color : 'red'});
+                cube = new THREE.Mesh(geometry,material);
+                cube.position.x = snake[i].x;
+                cube.position.y = snake[i].y;
+                cube.position.z = snake[i].z;
+                scene.add(cube);
+            }
+        }
+    
+        var pointLight = new THREE.PointLight( 0xff0000, 1, 100 );
+        pointLight.position.set( 10, 10, 10 );
+        scene.add( pointLight );
+
+        // var sphereSize = 1;
+        // var pointLightHelper = new THREE.PointLightHelper( pointLight, sphereSize );
+        // scene.add( pointLightHelper );
+
+
+        // helpers
+
+        var box = new THREE.Box3();
+        box.setFromCenterAndSize( new THREE.Vector3( 10, 10, 10 ), new THREE.Vector3( 20, 20, 20 ) );
+        var helper = new THREE.Box3Helper( box, 'blue' );
+        scene.add( helper );
+
+        // var helper = new THREE.CameraHelper( camera );
+        // scene.add( helper );
+    };
+
+
+
+    function collision(head, array){
+        for (var i=0; i<array.length;i++){
+            if(head.x == array[i].x && head.y == array[i].y && head.z == array[i].z){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    var d;
+    document.addEventListener('keydown', direction);
+
+    function direction(event){
+        let key = event.keyCode;
+        if (key == 37 && d != 'RIGHT'){
+            d = 'LEFT';
+        }else if (key == 38 && d != 'DOWN'){
+            d = 'UP';
+        }else if (key == 39 && d != 'LEFT'){
+            d = 'RIGHT';
+        }else if (key == 40 && d != 'UP'){
+            d = 'DOWN';
+        }else if (key == 36 && d!= 'towards'){
+            d = 'far';
+        }else if (key == 35 && d!= 'far'){
+            d = 'towards';
+        }
+
+    };
+
+    function animate(){
+        requestAnimationFrame(animate);
+
+        
+
+
+
+        var geometry = new THREE.SphereGeometry(1,20,20);
+        var material = new THREE.MeshBasicMaterial( {color: 'red'} );
+        sphere = new THREE.Mesh(geometry,material); 
+        sphere.position.x = food.x;
+        sphere.position.y = food.y;
+        sphere.position.z = food.z;
+        scene.add(sphere);
+
+
+
+        let snakeX = snake[0].x;
+        let snakeY = snake[0].y;
+        let snakeZ = snake[0].z;
+        
+        if( d == 'UP'){
+            snakeY += 0.1;
+            cube.position.y = snakeY;
+        }
+        if( d == 'DOWN'){
+            snakeY -= 0.1;
+            cube.position.y = snakeY;
+        }
+        if( d == 'RIGHT'){
+            snakeX += 0.1;
+            cube.position.x = snakeX;
+        }
+        if( d == 'LEFT'){
+            snakeX -= 0.1;
+            cube.position.x = snakeX;
+        }
+        if( d == 'towards'){
+            snakeZ += 0.1;
+            cube.position.z = snakeZ;
+        }
+        if( d == 'far'){
+            snakeZ -= 0.1;
+            cube.position.z = snakeZ;
+        }
+
+
+        if (snakeX == food.x && snakeY == food.y){
+            if (snakeZ == food.z){
+                food = {
+                    x: Math.floor(Math.random()*10)*box,
+                    y: Math.floor(Math.random()*10)*box,
+                    z: Math.floor(Math.random()*10)*box
+                }
+            }
+        }else{
+            // delete snake[snake.length - 1];
+            }
+
+
+
+        let NewHead = {
+            x : snakeX,
+            y : snakeY,
+            z : snakeZ
+        };
+
+
+        snake.unshift(NewHead);
+
+        renderer.render(scene,camera);
+    };
+
+    function onWindowResize(){
+        camera.aspect = window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    window.addEventListener('resize', onWindowResize, false);
+
+    init();
+    animate();
+
+        
+    </script>
+</body>
+</html>
